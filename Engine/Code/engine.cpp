@@ -198,8 +198,27 @@ void Init(App* app)
      app->oGlI =  GetOpenGlInfo();
     // TODO: Initialize your resources here!
     // - vertex buffers
-    // - element/index buffers
+     glGenBuffers(1, &app->embeddedVertices);
+     glBindBuffer(GL_ARRAY_BUFFER, app->embeddedVertices);
+     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+     // - element/index buffers
+     glGenBuffers(1, &app->embeddedElements);
+     glBindBuffer(GL_ARRAY_BUFFER, app->embeddedElements);
+     glBufferData(GL_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
     // - vaos
+     glGenVertexArrays(1, &app->vao);
+     glBindVertexArray(app->vao);
+     glBindBuffer(GL_ARRAY_BUFFER, app->embeddedVertices);
+     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexV3V2), (void*)0);
+     glEnableVertexAttribArray(0);
+     glVertexAttribPointer(1,2, GL_FLOAT, GL_FALSE, sizeof(VertexV3V2), (void*)12);
+     glEnableVertexAttribArray(1);
+     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, app->embeddedElements);
+     glBindVertexArray(0);
     // - programs (and retrieve uniform indices)
     // - textures
 

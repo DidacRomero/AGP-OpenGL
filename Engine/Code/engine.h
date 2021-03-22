@@ -36,6 +36,7 @@ struct Program
     u64                lastWriteTimestamp; // What is this for?
 };
 
+
 enum Mode
 {
     Mode_TexturedQuad,
@@ -48,6 +49,24 @@ struct OpenGLInfo
     char openGlVersion[64];
     char vendor[64];
     char glslVer[64];
+};
+
+struct VertexV3V2
+{
+    glm::vec3 pos;
+    glm::vec2 uv;
+};
+
+const VertexV3V2 vertices[] = {
+    { glm::vec3(-0.5, -0.5, 0.0), glm::vec2(0.0,0.0) },   //Bottom left vertex
+    { glm::vec3(0.5, -0.5, 0.0), glm::vec2(1.0, 0.0) },   //Bottom right vertex
+    { glm::vec3(0.5, 0.5, 0.0), glm::vec2(1.0, 1.0) },   //Top right vertex
+    { glm::vec3(-0.5, 0.5, 0.0), glm::vec2(0.0, 1.0) },  //Top left vertex
+};
+
+const u16 indices[] = {
+    0, 1, 2,
+    0, 2, 3
 };
 
 struct App
