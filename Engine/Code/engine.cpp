@@ -178,8 +178,24 @@ u32 LoadTexture2D(App* app, const char* filepath)
     }
 }
 
+//Get the OPENGL hardware info
+OpenGLInfo GetOpenGlInfo()
+{
+    OpenGLInfo ret;
+    strcpy(ret.openGlVersion, (const char*)glGetString(GL_VERSION));
+    strcpy(ret.vendor, (const char*)glGetString(GL_VENDOR));
+    strcpy(ret.renderer, (const char*)glGetString(GL_RENDERER));
+    strcpy(ret.glslVer, (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION));
+    //ret.gpuName = (char)glGetString(GL_VENDOR);
+
+
+    return ret;
+}
+
 void Init(App* app)
 {
+    //Get the OpenGL info
+     app->oGlI =  GetOpenGlInfo();
     // TODO: Initialize your resources here!
     // - vertex buffers
     // - element/index buffers
@@ -195,6 +211,15 @@ void Gui(App* app)
     ImGui::Begin("Info");
     ImGui::Text("FPS: %f", 1.0f/app->deltaTime);
     ImGui::End();
+
+    ImGui::Begin("OpenGL");
+    ImGui::Text("OpenGL version: %s", app->oGlI.openGlVersion);
+    ImGui::Text("OpenGL renderer: %s", app->oGlI.renderer);
+    ImGui::Text("OpenGL vendor: %s", app->oGlI.vendor);
+    ImGui::Text("OpenGL GLSL version: %s", app->oGlI.glslVer);
+    ImGui::End();
+
+    //Print OpenGl info
 }
 
 void Update(App* app)

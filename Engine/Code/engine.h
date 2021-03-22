@@ -42,6 +42,14 @@ enum Mode
     Mode_Count
 };
 
+struct OpenGLInfo 
+{
+    char renderer[64];
+    char openGlVersion[64];
+    char vendor[64];
+    char glslVer[64];
+};
+
 struct App
 {
     // Loop
@@ -52,8 +60,7 @@ struct App
     Input input;
 
     // Graphics
-    char gpuName[64];
-    char openGlVersion[64];
+    OpenGLInfo oGlI;
 
     ivec2 displaySize;
 
@@ -84,6 +91,8 @@ struct App
     // VAO object to link our screen filling quad with our textured quad shader
     GLuint vao;
 };
+
+OpenGLInfo GetOpenGlInfo();
 
 void Init(App* app);
 
