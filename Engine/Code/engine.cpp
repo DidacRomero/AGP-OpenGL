@@ -264,13 +264,32 @@ void Render(App* app)
             {
                 // TODO: Draw your textured quad here!
                 // - clear the framebuffer
+            glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 // - set the viewport
+            glViewport(0, 0, app->displaySize.x, app->displaySize.y);
+            // - bind the program 
+            Program& programTexturedGeometry = app->programs[app->texturedGeometryProgramIdx];
+            glUseProgram(programTexturedGeometry.handle);
+            // - bind the vao
+            glBindVertexArray(app->vao);
                 // - set the blending state
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 // - bind the texture into unit 0
-                // - bind the program 
+            glUniform1i(app->programUniformTexture, 0);
+            glActiveTexture(GL_TEXTURE0);
+            GLuint textureHandle = app->textures[app->diceTexIdx].handle;
+            glBindTexture(GL_TEXTURE_2D, textureHandle);
+                
+
                 //   (...and make its texture sample from unit 0)
-                // - bind the vao
+
                 // - glDrawElements() !!!
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+
+            glBindVertexArray(0);
+            glUseProgram(0);
             }
             break;
 
