@@ -196,6 +196,12 @@ OpenGLInfo GetOpenGlInfo()
 void Init(App* app)
 {
     OpenGLErrorGuard guard("Init: ");
+    //Set GL_KHR_debug - debug callback
+    if (GLVersion.major > 4 || (GLVersion.major == 4 && GLVersion.minor >= 3))
+    {
+        glDebugMessageCallback(OnGlError, app);
+    }
+
     //Get the OpenGL info
      app->oGlI =  GetOpenGlInfo();
     // TODO: Initialize your resources here!
@@ -256,6 +262,21 @@ void Gui(App* app)
 void Update(App* app)
 {
     // You can handle app->input keyboard/mouse here
+
+    //Hot Reload
+    for (u64 i = 0; i < app->programs.size(); ++i)
+    {
+        Program& program = app->programs[i];
+        u64 currentTimestamp = GetFileLastWriteTimestamp(program.filepath.c_str());
+        if (currentTimestamp > program.lastWriteTimestamp)
+        {
+            glDeleteProgram(program.handle);
+            String programSource = ReadTextFile(program.filepath.c_str());
+            const char* programName = program.programName.c_str();
+            program.handle = CreateProgramFromSource(programSource, programName);
+            program.lastWriteTimestamp = currentTimestamp;
+        }
+    }
 }
 
 void Render(App* app)
@@ -313,3 +334,40 @@ void OpenGLErrorGuard::checkGLError(const char* around, const char* message)
 
 
 }
+
+void OnGlError(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
+{
+    if (severity == GL_DEBUG_SEVERITY_NOTIFICATION)
+        return;
+
+    ELOG("OpenGL debug message: %s", message);
+    switch (source)
+    {
+        case GL_DEBUG_SOURCE_API:                                          ELOG(" - source: GL_DEBUG_SOURCE_API"); break;
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:           ELOG(" - source: GL_DEBUG_SOURCE_WINDOW_SYSTEM"); break;
+        case GL_DEBUG_SOURCE_SHADER_COMPILER:           ELOG(" - source: GL_DEBUG_SOURCE_SHADER_COMPILER"); break;
+        case GL_DEBUG_SOURCE_THIRD_PARTY:                   ELOG(" - source: GL_DEBUG_SOURCE_THIRD_PARTY"); break;
+        case GL_DEBUG_SOURCE_APPLICATION:                   ELOG(" - source: GL_DEBUG_SOURCE_APPLICATION"); break;
+        case GL_DEBUG_SOURCE_OTHER:                               ELOG(" - source: GL_DEBUG_SOURCE_OTHER"); break;
+    }
+    switch (type)
+    {
+        case GL_DEBUG_TYPE_ERROR:                                                        ELOG(" - source: GL_DEBUG_TYPE_ERROR"); break;
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:                         ELOG(" - source: GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR"); break;
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:                           ELOG(" - source: GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR"); break;
+        case GL_DEBUG_TYPE_PORTABILITY:                                           ELOG(" - source: GL_DEBUG_TYPE_PORTABILITY"); break;
+        case GL_DEBUG_TYPE_PERFORMANCE:                                         ELOG(" - source: GL_DEBUG_TYPE_PERFORMANCE"); break;
+        case GL_DEBUG_TYPE_MARKER:                                                    ELOG(" - source: GL_DEBUG_TYPE_MARKER"); break;
+        case GL_DEBUG_TYPE_PUSH_GROUP:                                             ELOG(" - source: GL_DEBUG_TYPE_PUSH_GROUP"); break;
+        case GL_DEBUG_TYPE_POP_GROUP:                                                 ELOG(" - source: GL_DEBUG_TYPE_POP_GROUP"); break;
+        case GL_DEBUG_TYPE_OTHER:                                                        ELOG(" - source: GL_DEBUG_TYPE_OTHER"); break;
+    }
+
+    switch (severity)
+    {
+        case GL_DEBUG_SEVERITY_HIGH:                                    ELOG(" - source: GL_DEBUG_SEVERITY_HIGH"); break;
+        case GL_DEBUG_SEVERITY_MEDIUM:                              ELOG(" - source: GL_DEBUG_SEVERITY_MEDIUM"); break;
+        case GL_DEBUG_SEVERITY_LOW:                                     ELOG(" - source: GL_DEBUG_SEVERITY_LOW"); break;
+        case GL_DEBUG_SEVERITY_NOTIFICATION:                  ELOG(" - source: GL_DEBUG_SEVERITY_NOTIFICATION"); break;
+    }
+};
