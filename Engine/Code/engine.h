@@ -111,6 +111,22 @@ struct App
     GLuint vao;
 };
 
+class OpenGLErrorGuard
+{
+public:
+    OpenGLErrorGuard(const char* message) : msg(message) {
+        checkGLError("BEGIN", msg);
+    }
+
+    ~OpenGLErrorGuard()
+    {
+        checkGLError("END", msg);
+    }
+    const char* msg;
+    //Catching message and managing it as we want
+    static void checkGLError(const char* around, const char* message);
+};
+
 OpenGLInfo GetOpenGlInfo();
 
 void Init(App* app);

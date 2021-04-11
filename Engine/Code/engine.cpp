@@ -181,6 +181,7 @@ u32 LoadTexture2D(App* app, const char* filepath)
 //Get the OPENGL hardware info
 OpenGLInfo GetOpenGlInfo()
 {
+    OpenGLErrorGuard guard("GLInfo()");
     OpenGLInfo ret;
     strcpy(ret.openGlVersion, (const char*)glGetString(GL_VERSION));
     strcpy(ret.vendor, (const char*)glGetString(GL_VENDOR));
@@ -194,6 +195,7 @@ OpenGLInfo GetOpenGlInfo()
 
 void Init(App* app)
 {
+    OpenGLErrorGuard guard("Init: ");
     //Get the OpenGL info
      app->oGlI =  GetOpenGlInfo();
     // TODO: Initialize your resources here!
@@ -258,6 +260,7 @@ void Update(App* app)
 
 void Render(App* app)
 {
+    OpenGLErrorGuard guard("blur()");
     switch (app->mode)
     {
         case Mode_TexturedQuad:
@@ -297,3 +300,16 @@ void Render(App* app)
     }
 }
 
+void OpenGLErrorGuard::checkGLError(const char* around, const char* message)
+{
+    GLenum error;
+    do {
+        error = glGetError();
+        if (error != GL_NO_ERROR)
+        {
+            //Handling error
+        }
+    } while (error != GL_NO_ERROR /*&& error != GL_CONTEXT_LOST*/);
+
+
+}
