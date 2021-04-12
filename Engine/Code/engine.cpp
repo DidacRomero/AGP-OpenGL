@@ -9,6 +9,7 @@
 #include <imgui.h>
 #include <stb_image.h>
 #include <stb_image_write.h>
+#include "../assimp_model_loading.h"
 
 GLuint CreateProgramFromSource(String programSource, const char* shaderName)
 {
@@ -193,6 +194,59 @@ OpenGLInfo GetOpenGlInfo()
     return ret;
 }
 
+GLuint FindVAO(Mesh& mesh, u32 submeshIndex, const Program& program)
+{
+    Submesh& submesh = mesh.submeshes[submeshIndex];
+
+    //Try finding a vao for this submesh/program
+    for (u32 i = 0; i < (u32)submesh.vaos.size(); ++i)
+        if (submesh.vaos[i].programHandle == program.handle)
+            return submesh.vaos[i].handle;
+
+    GLuint vaoHandle = 0;
+
+    //Create a new vao for this submesh/program
+    {
+        glGenVertexArrays(1, &vaoHandle);
+        glBindVertexArray(vaoHandle);
+
+        glBindBuffer(GL_ARRAY_BUFFER, mesh.vertexBufferHandle);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.indexBufferHandle);
+
+        //WE have to link all vertex inputs attributes to attributes in the vertex buffer
+        for (u32 i = 0; i < program.vertexInputLayout.attributes.size(); ++i)
+        {
+            bool attributeWasLinked = false;
+
+            for (u32 j = 0; j < submesh.vertexBufferLayout.attributes.size(); ++j)
+            {
+                if (program.vertexInputLayout.attributes[i].location == submesh.vertexBufferLayout.attributes[j].location)
+                {
+                    const u32 index = submesh.vertexBufferLayout.attributes[j].location;
+                    const u32 ncomp = submesh.vertexBufferLayout.attributes[j].componentCount;
+                    const u32 offset = submesh.vertexBufferLayout.attributes[j].offset + submesh.vertexOffset; //atribute offset + vertex offset
+                    const u32 stride = submesh.vertexBufferLayout.stride;
+                    glVertexAttribPointer(index, ncomp, GL_FLOAT, GL_FALSE, stride, (void*)(u64)offset);
+                    glEnableVertexAttribArray(index);
+
+                    attributeWasLinked = true;
+                    break;
+                }
+            }
+
+            assert(attributeWasLinked); // the submesh should provide an attribute for each vertex inputs
+        }
+
+        glBindVertexArray(0);
+        
+    }
+    //Store it in the list of vaos for this submesh
+    Vao vao = { vaoHandle, program.handle };
+    submesh.vaos.push_back(vao);
+
+    return vaoHandle;
+}
+
 void Init(App* app)
 {
     OpenGLErrorGuard guard("Init: ");
@@ -232,6 +286,41 @@ void Init(App* app)
      app->texturedGeometryProgramIdx = LoadProgram(app, "shaders.glsl", "TEXTURED_GEOMETRY");
      Program& texturedGeometryProgram = app->programs[app->texturedGeometryProgramIdx];
      app->programUniformTexture = glGetUniformLocation(texturedGeometryProgram.handle, "uTexture");
+
+     //Fill Input vertex shader layout automatically
+     app->texturedGeometryProgramIdx = LoadProgram(app, "shaders.glsl", "SHOW_TEXTURED_MESH");
+
+     //glGetProgramiv(programHandle, GL_ACTIVE_ATTRIBUTES, &attributeCount);
+     /*glGetActiveAttrib(programHandle, i, ARRAY_COUNT(attributeName),
+     &attributeNameLength,
+         &attributeSize,
+         &attributeType,
+         attributeName);*/
+     //attributeLocation = glGetAttribLocation(programhandle, attributeName);
+
+     //How to draw our meshes
+     app->model = LoadModel(app, "Patrick/Patrick.obj");
+     Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
+     glUseProgram(texturedMeshProgram.handle);
+
+     Model& model = app->models[app->model];
+     Mesh& mesh = app->meshes[model.meshIdx];
+
+     for (u32 i = 0; i < mesh.submeshes.size(); ++i)
+     {
+         GLuint vao = FindVAO(mesh, i, texturedMeshProgram);
+         glBindVertexArray(vao);
+
+         u32 submeshMaterialIdx = model.materialIdx[i];
+         Material& submeshMaterial = app->materials[submeshMaterialIdx];
+
+         glActiveTexture(GL_TEXTURE0);
+         glBindTexture(GL_TEXTURE_2D, app->textures[submeshMaterial.albedoTextureIdx].handle);
+         glUniform1i(app->texturedMeshProgram_uTexture, 0);
+
+         Submesh& submesh = mesh.submeshes[i];
+         glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64) submesh.indexOffset);
+     }
     
      // - textures
      app->diceTexIdx = LoadTexture2D(app, "dice.png");
@@ -307,14 +396,21 @@ void Render(App* app)
             glBindTexture(GL_TEXTURE_2D, textureHandle);
                 
 
-                //   (...and make its texture sample from unit 0)
-            VertexBufferLayout vertexBufferLayout = {};
-            vertexBufferLayout.attributes.push_back(VertexBufferAttribute{ 0,3,0 });        //3d Positions
-            vertexBufferLayout.attributes.push_back(VertexBufferAttribute{ 2,2,3*sizeof(float) });      //Tex coords
-            vertexBufferLayout.stride = 5 * sizeof(float);
+            //    //   (...and make its texture sample from unit 0)
+            ////create the vertex format
+            //VertexBufferLayout vertexBufferLayout = {};
+            //vertexBufferLayout.attributes.push_back(VertexBufferAttribute{ 0,3,0 });        //3d Positions
+            //vertexBufferLayout.attributes.push_back(VertexBufferAttribute{ 2,2,3*sizeof(float) });      //Tex coords
+            //vertexBufferLayout.stride = 5 * sizeof(float);
 
-            //add the submesh into the mesh
-            
+            ////add the submesh into the mesh
+            //Submesh submesh = {};
+            //submesh.vertexBufferLayout = vertexBufferLayout;
+
+
+            ///*submesh.vertices.swap(vertices);
+            //submesh.indices.swap(indices);
+            //myMesh->submeshes.push_back(submesh);*/
 
                 // - glDrawElements() !!!
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);

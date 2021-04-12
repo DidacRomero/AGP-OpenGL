@@ -37,7 +37,7 @@ void main()
 #endif
 #endif
 
-#ifdef MODELALBEDO
+#ifdef SHOW_TEXTURED_MESH
 
 #if defined(VERTEX)///////////////////////////////////////////////////
 layout(location = 0) in vec3 aPosition;

@@ -28,13 +28,7 @@ struct Texture
     std::string filepath;
 };
 
-struct Program
-{
-    GLuint             handle;
-    std::string        filepath;
-    std::string        programName;
-    u64                lastWriteTimestamp; // What is this for?
-};
+
 
 
 enum Mode
@@ -82,6 +76,15 @@ struct VertexBufferLayout
     u8 stride;
 };
 
+struct Program
+{
+    GLuint             handle;
+    std::string        filepath;
+    std::string        programName;
+    u64                lastWriteTimestamp; // What is this for?
+    VertexBufferLayout vertexInputLayout;
+};
+
 struct VertexShaderAttribute
 {
     u8 location;
@@ -106,6 +109,8 @@ struct Submesh
     std::vector <u32 > indices;
     u32 vertexOffset;
     u32 indexOffset;
+
+    std::vector<Vao> vaos;
 };
 
 struct Mesh
@@ -154,8 +159,12 @@ struct App
     std::vector<Model> models;
     std::vector<Program> programs;
 
+    //Aux
+    u32 model;
+
     // program indices
     u32 texturedGeometryProgramIdx;
+    u32 texturedMeshProgramIdx;
     
     // texture indices
     u32 diceTexIdx;
@@ -174,11 +183,10 @@ struct App
 
     // Location of the texture uniform in the textured quad shader
     GLuint programUniformTexture;
+    GLuint texturedMeshProgram_uTexture;
 
     // VAO object to link our screen filling quad with our textured quad shader
     GLuint vao;
-
-   
 };
 
 class OpenGLErrorGuard
@@ -198,6 +206,10 @@ public:
 };
 
 OpenGLInfo GetOpenGlInfo();
+
+GLuint FindVAO(Mesh& mesh, u32 submeshIndex, const Program& program);
+
+u32 LoadTexture2D(App* app, const char* filepath);
 
 void Init(App* app);
 
