@@ -28,13 +28,11 @@ struct Texture
     std::string filepath;
 };
 
-
-
-
 enum Mode
 {
     Mode_TexturedQuad,
-    Mode_Count
+    Mode_Count,
+    Mode_Model
 };
 
 struct OpenGLInfo 
@@ -81,7 +79,7 @@ struct Program
     GLuint             handle;
     std::string        filepath;
     std::string        programName;
-    u64                lastWriteTimestamp; // What is this for?
+    u64                lastWriteTimestamp; 
     VertexBufferLayout vertexInputLayout;
 };
 
@@ -89,6 +87,8 @@ struct VertexShaderAttribute
 {
     u8 location;
     u8 componentCount;
+
+    std::string Name;
 };
 
 struct VertexShaderLayout

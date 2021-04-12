@@ -99,8 +99,30 @@ u32 LoadProgram(App* app, const char* filepath, const char* programName)
     program.filepath = filepath;
     program.programName = programName;
     program.lastWriteTimestamp = GetFileLastWriteTimestamp(filepath);
-    app->programs.push_back(program);
+    
 
+    GLint attributeCount;
+    glGetProgramiv(program.handle, GL_ACTIVE_ATTRIBUTES, &attributeCount);
+
+    GLchar attributeName[128];
+    GLsizei attributeNameLength;
+    GLint attributeSize;
+    GLenum attributeType;
+
+    for (int i = 0; i < attributeCount; ++i)
+    {
+        glGetActiveAttrib(program.handle, i, 128,
+            &attributeNameLength,
+            &attributeSize,
+            &attributeType,
+            attributeName);
+
+        u8 attribute= glGetAttribLocation(program.handle, attributeName);
+
+        program.vertexInputLayout.attributes.push_back({ attribute, u8(attributeSize) });
+    }
+
+    app->programs.push_back(program);
     return app->programs.size() - 1;
 }
 
@@ -288,7 +310,7 @@ void Init(App* app)
      app->programUniformTexture = glGetUniformLocation(texturedGeometryProgram.handle, "uTexture");
 
      //Fill Input vertex shader layout automatically
-     app->texturedGeometryProgramIdx = LoadProgram(app, "shaders.glsl", "SHOW_TEXTURED_MESH");
+     //app->texturedGeometryProgramIdx = LoadProgram(app, "shaders.glsl", "SHOW_TEXTURED_MESH");
 
      //glGetProgramiv(programHandle, GL_ACTIVE_ATTRIBUTES, &attributeCount);
      /*glGetActiveAttrib(programHandle, i, ARRAY_COUNT(attributeName),
@@ -298,30 +320,6 @@ void Init(App* app)
          attributeName);*/
      //attributeLocation = glGetAttribLocation(programhandle, attributeName);
 
-     //How to draw our meshes
-     app->model = LoadModel(app, "Patrick/Patrick.obj");
-     Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
-     glUseProgram(texturedMeshProgram.handle);
-
-     Model& model = app->models[app->model];
-     Mesh& mesh = app->meshes[model.meshIdx];
-
-     for (u32 i = 0; i < mesh.submeshes.size(); ++i)
-     {
-         GLuint vao = FindVAO(mesh, i, texturedMeshProgram);
-         glBindVertexArray(vao);
-
-         u32 submeshMaterialIdx = model.materialIdx[i];
-         Material& submeshMaterial = app->materials[submeshMaterialIdx];
-
-         glActiveTexture(GL_TEXTURE0);
-         glBindTexture(GL_TEXTURE_2D, app->textures[submeshMaterial.albedoTextureIdx].handle);
-         glUniform1i(app->texturedMeshProgram_uTexture, 0);
-
-         Submesh& submesh = mesh.submeshes[i];
-         glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64) submesh.indexOffset);
-     }
-    
      // - textures
      app->diceTexIdx = LoadTexture2D(app, "dice.png");
      app->whiteTexIdx = LoadTexture2D(app, "color_white.png");
@@ -329,7 +327,11 @@ void Init(App* app)
      app->normalTexIdx = LoadTexture2D(app, "color_normal.png");
      app->magentaTexIdx = LoadTexture2D(app, "color_magenta.png");
 
-    app->mode = Mode_TexturedQuad;
+     //Meshes
+     app->texturedGeometryProgramIdx = LoadProgram(app, "shaders.glsl", "SHOW_TEXTURED_MESH");
+     app->model = LoadModel(app, "Patrick/Patrick.obj");
+     
+    app->mode = Mode_Model;
 }
 
 void Gui(App* app)
@@ -394,29 +396,43 @@ void Render(App* app)
             glActiveTexture(GL_TEXTURE0);
             GLuint textureHandle = app->textures[app->diceTexIdx].handle;
             glBindTexture(GL_TEXTURE_2D, textureHandle);
-                
-
-            //    //   (...and make its texture sample from unit 0)
-            ////create the vertex format
-            //VertexBufferLayout vertexBufferLayout = {};
-            //vertexBufferLayout.attributes.push_back(VertexBufferAttribute{ 0,3,0 });        //3d Positions
-            //vertexBufferLayout.attributes.push_back(VertexBufferAttribute{ 2,2,3*sizeof(float) });      //Tex coords
-            //vertexBufferLayout.stride = 5 * sizeof(float);
-
-            ////add the submesh into the mesh
-            //Submesh submesh = {};
-            //submesh.vertexBufferLayout = vertexBufferLayout;
-
-
-            ///*submesh.vertices.swap(vertices);
-            //submesh.indices.swap(indices);
-            //myMesh->submeshes.push_back(submesh);*/
 
                 // - glDrawElements() !!!
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 
             glBindVertexArray(0);
             glUseProgram(0);
+            }
+            break;
+
+        case Mode::Mode_Model:
+            {
+                glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                glViewport(0, 0, app->displaySize.x, app->displaySize.y);
+
+                Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
+                glUseProgram(texturedMeshProgram.handle);
+
+                Model& model = app->models[app->model];
+                Mesh& mesh = app->meshes[model.meshIdx];
+
+                for (u32 i = 0; i < mesh.submeshes.size(); ++i)
+                {
+                    GLuint vao = FindVAO(mesh, i, texturedMeshProgram);
+                    glBindVertexArray(vao);
+
+                    u32 submeshMaterialIdx = model.materialIdx[i];
+                    Material& submeshMaterial = app->materials[submeshMaterialIdx];
+
+                    glActiveTexture(GL_TEXTURE0);
+                    glBindTexture(GL_TEXTURE_2D, app->textures[submeshMaterial.albedoTextureIdx].handle);
+                    glUniform1i(app->texturedMeshProgram_uTexture, 0);
+
+                    Submesh& submesh = mesh.submeshes[i];
+                    glDrawElements(GL_TRIANGLES, submesh.indices.size(), GL_UNSIGNED_INT, (void*)(u64)submesh.indexOffset);
+                }
             }
             break;
 
@@ -434,8 +450,6 @@ void OpenGLErrorGuard::checkGLError(const char* around, const char* message)
             //Handling error
         }
     } while (error != GL_NO_ERROR /*&& error != GL_CONTEXT_LOST*/);
-
-
 }
 
 void OnGlError(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
