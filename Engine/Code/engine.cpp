@@ -308,6 +308,13 @@ void Render(App* app)
                 
 
                 //   (...and make its texture sample from unit 0)
+            VertexBufferLayout vertexBufferLayout = {};
+            vertexBufferLayout.attributes.push_back(VertexBufferAttribute{ 0,3,0 });        //3d Positions
+            vertexBufferLayout.attributes.push_back(VertexBufferAttribute{ 2,2,3*sizeof(float) });      //Tex coords
+            vertexBufferLayout.stride = 5 * sizeof(float);
+
+            //add the submesh into the mesh
+            
 
                 // - glDrawElements() !!!
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
