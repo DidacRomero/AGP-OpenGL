@@ -32,7 +32,7 @@ enum Mode
 {
     Mode_TexturedQuad,
     Mode_Count,
-    Mode_Model
+    Mode_TexturedModel
 };
 
 struct OpenGLInfo 
@@ -74,27 +74,27 @@ struct VertexBufferLayout
     u8 stride;
 };
 
-struct Program
-{
-    GLuint             handle;
-    std::string        filepath;
-    std::string        programName;
-    u64                lastWriteTimestamp; 
-    VertexBufferLayout vertexInputLayout;
-};
-
 struct VertexShaderAttribute
 {
     u8 location;
     u8 componentCount;
-
-    std::string Name;
 };
 
 struct VertexShaderLayout
 {
     std::vector<VertexShaderAttribute> attributes;
 };
+
+struct Program
+{
+    GLuint             handle;
+    std::string        filepath;
+    std::string        programName;
+    u64                lastWriteTimestamp; 
+    VertexShaderLayout vertexInputLayout;
+};
+
+
 
 struct Vao
 {
@@ -161,6 +161,7 @@ struct App
 
     //Aux
     u32 model;
+    u32 texturedMeshProgram_uTexture;
 
     // program indices
     u32 texturedGeometryProgramIdx;
@@ -183,7 +184,7 @@ struct App
 
     // Location of the texture uniform in the textured quad shader
     GLuint programUniformTexture;
-    GLuint texturedMeshProgram_uTexture;
+    
 
     // VAO object to link our screen filling quad with our textured quad shader
     GLuint vao;

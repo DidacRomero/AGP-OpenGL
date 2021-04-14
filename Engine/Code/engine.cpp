@@ -309,17 +309,6 @@ void Init(App* app)
      Program& texturedGeometryProgram = app->programs[app->texturedGeometryProgramIdx];
      app->programUniformTexture = glGetUniformLocation(texturedGeometryProgram.handle, "uTexture");
 
-     //Fill Input vertex shader layout automatically
-     //app->texturedGeometryProgramIdx = LoadProgram(app, "shaders.glsl", "SHOW_TEXTURED_MESH");
-
-     //glGetProgramiv(programHandle, GL_ACTIVE_ATTRIBUTES, &attributeCount);
-     /*glGetActiveAttrib(programHandle, i, ARRAY_COUNT(attributeName),
-     &attributeNameLength,
-         &attributeSize,
-         &attributeType,
-         attributeName);*/
-     //attributeLocation = glGetAttribLocation(programhandle, attributeName);
-
      // - textures
      app->diceTexIdx = LoadTexture2D(app, "dice.png");
      app->whiteTexIdx = LoadTexture2D(app, "color_white.png");
@@ -328,10 +317,10 @@ void Init(App* app)
      app->magentaTexIdx = LoadTexture2D(app, "color_magenta.png");
 
      //Meshes
-     app->texturedGeometryProgramIdx = LoadProgram(app, "shaders.glsl", "SHOW_TEXTURED_MESH");
+     app->texturedMeshProgramIdx = LoadProgram(app, "shaders.glsl", "SHOW_TEXTURED_MESH");
      app->model = LoadModel(app, "Patrick/Patrick.obj");
      
-    app->mode = Mode_Model;
+    app->mode = Mode_TexturedModel;
 }
 
 void Gui(App* app)
@@ -405,14 +394,14 @@ void Render(App* app)
             }
             break;
 
-        case Mode::Mode_Model:
+        case Mode::Mode_TexturedModel:
             {
                 glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 glViewport(0, 0, app->displaySize.x, app->displaySize.y);
 
-                Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
+                Program& texturedMeshProgram = app->programs[app->texturedGeometryProgramIdx];
                 glUseProgram(texturedMeshProgram.handle);
 
                 Model& model = app->models[app->model];
