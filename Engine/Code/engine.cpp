@@ -401,7 +401,7 @@ void Render(App* app)
 
                 glViewport(0, 0, app->displaySize.x, app->displaySize.y);
 
-                Program& texturedMeshProgram = app->programs[app->texturedGeometryProgramIdx];
+                Program& texturedMeshProgram = app->programs[app->texturedMeshProgramIdx];
                 glUseProgram(texturedMeshProgram.handle);
 
                 Model& model = app->models[app->model];

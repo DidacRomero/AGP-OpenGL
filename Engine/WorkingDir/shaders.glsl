@@ -57,12 +57,12 @@ void main()
 	//it is usually computed by the projection matrix. Because
 	//we are not passing uniform transforms yet, we increase
 	// the clipping scale so that Patrick fits the screen.
-	float clipingScale = 5.0;
+	float clippingScale = 5.0;
 
 	gl_Position = vec4(aPosition, clippingScale);
 
 	//Patrick looks away from the camera by default, so flip it here.
-	gl_position.z = -gl_Position.z;
+	gl_Position.z = -gl_Position.z;
 }
 
 
