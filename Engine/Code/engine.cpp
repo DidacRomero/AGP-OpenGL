@@ -280,6 +280,18 @@ void Init(App* app)
 
     //Get the OpenGL info
      app->oGlI =  GetOpenGlInfo();
+
+     glEnable(GL_DEPTH_TEST);
+     // We only need to do this once
+     glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &app->maxUniformBufferSize);
+     glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT,&app->uniformBlockAlignment);
+
+     GLuint bufferHandle;
+     glGenBuffers(1, &bufferHandle);
+     glBindBuffer(GL_UNIFORM_BUFFER, bufferHandle);
+     glBufferData(GL_UNIFORM_BUFFER, app->maxUniformBufferSize, NULL, GL_STREAM_DRAW);
+     glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
     // TODO: Initialize your resources here!
     // - vertex buffers
      glGenBuffers(1, &app->embeddedVertices);
@@ -357,6 +369,20 @@ void Update(App* app)
             program.lastWriteTimestamp = currentTimestamp;
         }
     }
+
+    /*glBindBuffer(GL_UNIFORM_BUFFER, bufferHandle);
+    u8* bufferData = (u8*)glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
+    u32 bufferHead = 0;
+
+    memcpy( bufferData + bufferHead, glm::value_ptr( worldMatrix), sizeof(glm::mat4));
+    bufferHead += sizeof(glm::mat4);
+
+    memcpy(bufferData + bufferHead, glm::value_ptr(worldViewProjectionMatrix), sizeof(glm::mat4));
+    bufferHead += sizeof(glm::mat4);
+
+    glUnmapBuffer(GL_UNIFORM_BUFFER);
+    glBindBuffer(GL_UNIFORM_BUFFER,0);*/
+
 }
 
 void Render(App* app)
